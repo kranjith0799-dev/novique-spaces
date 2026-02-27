@@ -1,10 +1,11 @@
-// 1️⃣ Load environment variables first
+// 1️⃣ Load environment variables
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+// We'll comment out nodemailer for now on Render free plan
+// const nodemailer = require("nodemailer");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,43 +14,28 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// 3️⃣ EMAIL TRANSPORTER
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// 3️⃣ MongoDB Connection (Mongoose v7 compatible)
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected ✅"))
+  .catch(err => console.error("MongoDB Connection Error:", err));
 
-// 4️⃣ MONGODB CONNECTION
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log("MongoDB Connected ✅"))
-.catch(err => console.error("MongoDB Connection Error:", err));
-
-// 5️⃣ SCHEMA
+// 4️⃣ Schema
 const ContactSchema = new mongoose.Schema({
   name: String,
   number: String,
   email: String,
   message: String,
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  createdAt: { type: Date, default: Date.now }
 });
 
 const Contact = mongoose.model("Contact", ContactSchema);
 
-// 6️⃣ Test route
+// 5️⃣ Test route
 app.get("/", (req, res) => {
   res.send("Backend is working!");
 });
 
-// 7️⃣ Contact form route
+// 6️⃣ Contact form route
 app.post("/contact", async (req, res) => {
   try {
     const { name, number, email, message } = req.body;
@@ -63,27 +49,14 @@ app.post("/contact", async (req, res) => {
     await newContact.save();
     console.log("Saved to MongoDB ✅");
 
-    // Send email to you
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
-      subject: "New Website Contact Message",
-      text: `Name: ${name}\nNumber: ${number}\nEmail: ${email}\nMessage: ${message}`
-    };
-    await transporter.sendMail(mailOptions);
+    // 🔹 EMAILS ARE DISABLED FOR RENDER FREE PLAN
+    // To enable emails safely, use SendGrid API
+    // Example:
+    // import sgMail from '@sendgrid/mail';
+    // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    // await sgMail.send({ to: email, from: process.env.EMAIL_USER, subject: "...", text: "..." });
 
-    // Auto-reply to user
-    const autoReply = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Thank you for contacting NOVIQUE SPACES",
-      text: `Hi ${name},\n\nThank you for contacting NOVIQUE SPACES.\nWe received your message and will contact you soon.\n\nRegards,\nNOVIQUE SPACES`
-    };
-   // await transporter.sendMail(autoReply);
-
-    console.log("Email Sent ✅");
-
-    res.json({ success: true, message: "Message sent successfully ✅" });
+    res.json({ success: true, message: "Message saved successfully ✅" });
 
   } catch (error) {
     console.error("CONTACT ERROR:", error);
@@ -91,7 +64,7 @@ app.post("/contact", async (req, res) => {
   }
 });
 
-// 8️⃣ Start server
+// 7️⃣ Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
