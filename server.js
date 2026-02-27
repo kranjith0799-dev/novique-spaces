@@ -4,6 +4,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+// Optional SendGrid - ready to uncomment later
+// const sgMail = require("@sendgrid/mail");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,10 +49,30 @@ app.post("/contact", async (req, res) => {
     await newContact.save();
     console.log("Saved to MongoDB ✅");
 
-    // 🔹 EMAILS ARE DISABLED
-    // To enable emails later:
-    // 1. Use SendGrid API or Gmail App Password
-    // 2. Uncomment email sending code here
+    // 🔹 OPTIONAL EMAILS (SendGrid)
+    /*
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+    // Send email to admin
+    const adminMsg = {
+      to: process.env.EMAIL_USER,
+      from: process.env.EMAIL_USER,
+      subject: "New Website Contact Message",
+      text: `Name: ${name}\nNumber: ${number}\nEmail: ${email}\nMessage: ${message}`
+    };
+    await sgMail.send(adminMsg);
+
+    // Auto-reply to user
+    const userMsg = {
+      to: email,
+      from: process.env.EMAIL_USER,
+      subject: "Thank you for contacting NOVIQUE SPACES",
+      text: `Hi ${name},\n\nThank you for contacting NOVIQUE SPACES.\nWe received your message and will contact you soon.\n\nRegards,\nNOVIQUE SPACES`
+    };
+    await sgMail.send(userMsg);
+
+    console.log("Emails Sent ✅");
+    */
 
     res.json({ success: true, message: "Message saved successfully ✅" });
 
