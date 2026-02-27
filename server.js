@@ -4,8 +4,6 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-// We'll comment out nodemailer for now on Render free plan
-// const nodemailer = require("nodemailer");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -14,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// 3️⃣ MongoDB Connection (Mongoose v7 compatible)
+// 3️⃣ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected ✅"))
   .catch(err => console.error("MongoDB Connection Error:", err));
@@ -49,12 +47,10 @@ app.post("/contact", async (req, res) => {
     await newContact.save();
     console.log("Saved to MongoDB ✅");
 
-    // 🔹 EMAILS ARE DISABLED FOR RENDER FREE PLAN
-    // To enable emails safely, use SendGrid API
-    // Example:
-    // import sgMail from '@sendgrid/mail';
-    // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    // await sgMail.send({ to: email, from: process.env.EMAIL_USER, subject: "...", text: "..." });
+    // 🔹 EMAILS ARE DISABLED
+    // To enable emails later:
+    // 1. Use SendGrid API or Gmail App Password
+    // 2. Uncomment email sending code here
 
     res.json({ success: true, message: "Message saved successfully ✅" });
 
