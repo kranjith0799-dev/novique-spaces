@@ -25,7 +25,7 @@ const transporter = nodemailer.createTransport({
 // ✅ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected ✅"))
-.catch(err => console.log(err));
+.catch(err => console.error("MongoDB Connection Error:", err));
 
 
 // ✅ Schema
@@ -52,49 +52,49 @@ app.get("/", (req, res) => {
 // ✅ CONTACT FORM
 app.post("/contact", async (req, res) => {
 
-try {
+  try {
 
-const { name, number, email, message } = req.body;
+    const { name, number, email, message } = req.body;
 
+    if (!name || !number || !email || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required"
+      });
+    }
 
-// ✅ SAVE TO MONGODB
-const newContact = new Contact({
-  name,
-  number,
-  email,
-  message
-});
+    // ✅ SAVE TO MONGODB
+    const newContact = new Contact({
+      name,
+      number,
+      email,
+      message
+    });
 
-await newContact.save();
+    await newContact.save();
+    console.log("Saved to MongoDB ✅");
 
-console.log("Saved to MongoDB ✅");
-
-
-// ✅ SEND EMAIL
-const mailOptions = {
-
-  from: process.env.EMAIL_USER,
-  to: process.env.EMAIL_USER, // your email receives message
-
-  subject: "New Website Contact Message",
-
-  text: `
+    // ✅ SEND EMAIL TO YOU
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
+      subject: "New Website Contact Message",
+      text: `
 Name : ${name}
 Number : ${number}
 Email : ${email}
 Message : ${message}
 `
-};
+    };
 
-await transporter.sendMail(mailOptions);
-const autoReply = {
+    await transporter.sendMail(mailOptions);
 
-from: process.env.EMAIL_USER,
-to: email,
-
-subject:"Thank you for contacting NOVIQUE SPACES",
-
-text:`
+    // ✅ AUTO REPLY TO USER
+    const autoReply = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Thank you for contacting NOVIQUE SPACES",
+      text: `
 Hi ${name},
 
 Thank you for contacting NOVIQUE SPACES.
@@ -104,35 +104,32 @@ We received your message and will contact you soon.
 Regards,
 NOVIQUE SPACES
 `
+    };
 
-};
+    await transporter.sendMail(autoReply);
 
-await transporter.sendMail(autoReply);
+    console.log("Email Sent ✅");
 
-console.log("Email Sent ✅");
+    res.json({
+      success: true,
+      message: "Message sent successfully ✅"
+    });
 
+  } catch (error) {
 
-// ✅ RESPONSE
-res.json({
-success:true,
-message:"Message sent successfully ✅"
-});
+    console.error("CONTACT ERROR:", error); // 🔥 this is important
 
-}catch(error){
+    res.status(500).json({
+      success: false,
+      message: error.message   // 🔥 send real error back
+    });
 
-console.log(error);
-
-res.status(500).json({
-success:false,
-message:"Error saving form"
-});
-
-}
+  }
 
 });
 
 
 // ✅ SERVER START
 app.listen(PORT, () => {
-console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
